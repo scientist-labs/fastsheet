@@ -126,10 +126,11 @@ The library automatically converts Excel data types:
 - Numbers (integers and floats)
 - Strings (with whitespace trimming)
 - Booleans (`true`/`false`)
+- Dates and times (as Ruby `Time` objects)
 - Empty cells (as `nil`)
 - Error cells (as `nil`)
 
-Dates and formulas returned as `nil`.
+Dates and formulas are properly handled and converted to appropriate Ruby types.
 
 ## Contributing
 
