@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'fastsheet/sheet'
 
-RSpec.describe Fastsheet::Sheet, 'data types' do
+RSpec.describe Fastsheet::Sheet do
   describe 'data type conversion' do
     context 'with mocked data containing various types' do
       let(:mixed_rows) do
@@ -35,19 +35,19 @@ RSpec.describe Fastsheet::Sheet, 'data types' do
         sheet = described_class.new('dummy.xlsx')
 
         header_row = sheet.row(0)
-        expect(header_row).to eq(['Header1', 'Header2', 'Header3', 'Header4'])
+        expect(header_row).to eq(%w[Header1 Header2 Header3 Header4])
 
-        data_row_1 = sheet.row(1)
-        expect(data_row_1[0]).to be_a(String) # Date as string in mock
-        expect(data_row_1[1]).to eq(42)
-        expect(data_row_1[2]).to eq('Hello World')
-        expect(data_row_1[3]).to be(true)
+        data_row_first = sheet.row(1)
+        expect(data_row_first[0]).to be_a(String) # Date as string in mock
+        expect(data_row_first[1]).to eq(42)
+        expect(data_row_first[2]).to eq('Hello World')
+        expect(data_row_first[3]).to be(true)
 
-        data_row_2 = sheet.row(2)
-        expect(data_row_2[0]).to be_a(String) # DateTime as string in mock
-        expect(data_row_2[1]).to eq(3.14159)
-        expect(data_row_2[2]).to eq('Test String')
-        expect(data_row_2[3]).to be(false)
+        data_row_second = sheet.row(2)
+        expect(data_row_second[0]).to be_a(String) # DateTime as string in mock
+        expect(data_row_second[1]).to eq(3.14159)
+        expect(data_row_second[2]).to eq('Test String')
+        expect(data_row_second[3]).to be(false)
       end
 
       it 'handles nil values properly' do
@@ -180,9 +180,9 @@ RSpec.describe Fastsheet::Sheet, 'data types' do
         100.times do |col_idx|
           case col_idx % 5
           when 0
-            row_data << row_idx + col_idx # Integer
+            row_data << (row_idx + col_idx) # Integer
           when 1
-            row_data << (row_idx + col_idx) * 0.1 # Float
+            row_data << ((row_idx + col_idx) * 0.1) # Float
           when 2
             row_data << "Row#{row_idx}_Col#{col_idx}" # String
           when 3

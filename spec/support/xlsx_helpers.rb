@@ -62,13 +62,13 @@ module XlsxHelpers
   end
 
   # Build a temporary XLSX file with dates, times, and formulas
-  def build_temp_xlsx_with_data_types
+  def build_temp_xlsx_with_data_types # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     Tempfile.create(['fastsheet_data_types', '.xlsx']).tap do |tmp|
       tmp.close
       Axlsx::Package.new do |package|
         package.workbook.add_worksheet(name: 'DataTypes') do |sheet|
           # Header row
-          sheet.add_row ['Type', 'Value', 'Formula', 'Result']
+          sheet.add_row %w[Type Value Formula Result]
 
           # Date values
           sheet.add_row ['Date', Date.new(2023, 12, 25), nil, nil]

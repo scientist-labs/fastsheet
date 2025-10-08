@@ -3,26 +3,26 @@
 require 'spec_helper'
 require 'fastsheet'
 
-RSpec.describe Fastsheet::Sheet, 'data types', :integration do
+RSpec.describe Fastsheet::Sheet, :integration do
   describe 'dates and times' do
     it 'reads date values as Time objects' do
       file = build_temp_xlsx_with_data_types
       sheet = described_class.new(file.path)
 
       # Check date rows (rows 1 and 2, 0-indexed)
-      date_row_1 = sheet.row(1)
-      date_row_2 = sheet.row(2)
+      date_row_first = sheet.row(1)
+      date_row_second = sheet.row(2)
 
-      expect(date_row_1[0]).to eq('Date')
-      expect(date_row_1[1]).to be_a(Time)
-      expect(date_row_1[1].year).to eq(2023)
-      expect(date_row_1[1].month).to eq(12)
-      expect(date_row_1[1].day).to eq(25)
+      expect(date_row_first[0]).to eq('Date')
+      expect(date_row_first[1]).to be_a(Time)
+      expect(date_row_first[1].year).to eq(2023)
+      expect(date_row_first[1].month).to eq(12)
+      expect(date_row_first[1].day).to eq(25)
 
-      expect(date_row_2[1]).to be_a(Time)
-      expect(date_row_2[1].year).to eq(2024)
-      expect(date_row_2[1].month).to eq(1)
-      expect(date_row_2[1].day).to eq(1)
+      expect(date_row_second[1]).to be_a(Time)
+      expect(date_row_second[1].year).to eq(2024)
+      expect(date_row_second[1].month).to eq(1)
+      expect(date_row_second[1].day).to eq(1)
     end
 
     it 'reads datetime values with time components' do
@@ -30,24 +30,24 @@ RSpec.describe Fastsheet::Sheet, 'data types', :integration do
       sheet = described_class.new(file.path)
 
       # Check datetime rows (rows 3 and 4, 0-indexed)
-      datetime_row_1 = sheet.row(3)
-      datetime_row_2 = sheet.row(4)
+      datetime_row_first = sheet.row(3)
+      datetime_row_second = sheet.row(4)
 
-      expect(datetime_row_1[0]).to eq('DateTime')
-      expect(datetime_row_1[1]).to be_a(Time)
-      expect(datetime_row_1[1].year).to eq(2023)
-      expect(datetime_row_1[1].month).to eq(12)
-      expect(datetime_row_1[1].day).to eq(25)
-      expect(datetime_row_1[1].hour).to eq(14)
-      expect(datetime_row_1[1].min).to eq(30)
-      expect(datetime_row_1[1].sec).to eq(0)
+      expect(datetime_row_first[0]).to eq('DateTime')
+      expect(datetime_row_first[1]).to be_a(Time)
+      expect(datetime_row_first[1].year).to eq(2023)
+      expect(datetime_row_first[1].month).to eq(12)
+      expect(datetime_row_first[1].day).to eq(25)
+      expect(datetime_row_first[1].hour).to eq(14)
+      expect(datetime_row_first[1].min).to eq(30)
+      expect(datetime_row_first[1].sec).to eq(0)
 
-      expect(datetime_row_2[1]).to be_a(Time)
-      expect(datetime_row_2[1].year).to eq(2024)
-      expect(datetime_row_2[1].month).to eq(6)
-      expect(datetime_row_2[1].day).to eq(15)
-      expect(datetime_row_2[1].hour).to eq(9)
-      expect(datetime_row_2[1].min).to eq(45)
+      expect(datetime_row_second[1]).to be_a(Time)
+      expect(datetime_row_second[1].year).to eq(2024)
+      expect(datetime_row_second[1].month).to eq(6)
+      expect(datetime_row_second[1].day).to eq(15)
+      expect(datetime_row_second[1].hour).to eq(9)
+      expect(datetime_row_second[1].min).to eq(45)
       expect(datetime_row_2[1].sec).to eq(30)
     end
 
@@ -100,7 +100,7 @@ RSpec.describe Fastsheet::Sheet, 'data types', :integration do
       addition_row = sheet.row(8)
       expect(addition_row[0]).to eq('Formula')
       expect(addition_row[2]).to eq('=B6+B7')
-      # Note: The result might be in a different column depending on how Excel evaluates it
+      # NOTE: The result might be in a different column depending on how Excel evaluates it
 
       # =B6*B8 (10 * 5 = 50) - row 9
       multiplication_row = sheet.row(9)
@@ -195,7 +195,7 @@ RSpec.describe Fastsheet::Sheet, 'data types', :integration do
         expect { sheet.rows }.not_to raise_error
 
         # Error cells should be nil or have some error representation
-        error_rows = sheet.rows[1..-1] # Skip header
+        error_rows = sheet.rows[1..] # Skip header
         error_rows.each do |row|
           expect(row).to be_an(Array)
           expect(row.length).to eq(2)
@@ -228,20 +228,20 @@ RSpec.describe Fastsheet::Sheet, 'data types', :integration do
       sheet = described_class.new(file.path)
 
       # Mixed data type rows are at the end
-      mixed_row_1 = sheet.row(27) # [nil, nil, 42.5, 'Text']
-      expect(mixed_row_1[0]).to eq('Mixed')
-      expect(mixed_row_1[1]).to be_nil
-      expect(mixed_row_1[2]).to eq(42.5)
-      expect(mixed_row_1[3]).to eq('Text')
+      mixed_row_first = sheet.row(27) # [nil, nil, 42.5, 'Text']
+      expect(mixed_row_first[0]).to eq('Mixed')
+      expect(mixed_row_first[1]).to be_nil
+      expect(mixed_row_first[2]).to eq(42.5)
+      expect(mixed_row_first[3]).to eq('Text')
 
-      mixed_row_2 = sheet.row(28) # [Date, true, nil]
-      expect(mixed_row_2[0]).to eq('Mixed')
-      expect(mixed_row_2[1]).to be_a(Time) # Date gets converted to Time
-      expect(mixed_row_2[1].year).to eq(2024)
-      expect(mixed_row_2[1].month).to eq(3)
-      expect(mixed_row_2[1].day).to eq(15)
-      expect(mixed_row_2[2]).to be(true)
-      expect(mixed_row_2[3]).to be_nil
+      mixed_row_second = sheet.row(28) # [Date, true, nil]
+      expect(mixed_row_second[0]).to eq('Mixed')
+      expect(mixed_row_second[1]).to be_a(Time) # Date gets converted to Time
+      expect(mixed_row_second[1].year).to eq(2024)
+      expect(mixed_row_second[1].month).to eq(3)
+      expect(mixed_row_second[1].day).to eq(15)
+      expect(mixed_row_second[2]).to be(true)
+      expect(mixed_row_second[3]).to be_nil
     end
 
     it 'preserves data types in columns' do
@@ -269,10 +269,10 @@ RSpec.describe Fastsheet::Sheet, 'data types', :integration do
         tmp.close
         Axlsx::Package.new do |package|
           package.workbook.add_worksheet(name: 'Precision') do |sheet|
-            sheet.add_row ['Type', 'Value']
+            sheet.add_row %w[Type Value]
             sheet.add_row ['Float', 3.14159265359]
             sheet.add_row ['Scientific', 1.23e-10]
-            sheet.add_row ['Large Float', 123456789.987654321]
+            sheet.add_row ['Large Float', 123_456_789.987654321]
             sheet.add_row ['Small Float', 0.000000123]
             sheet.add_row ['Negative', -42.5]
           end
@@ -291,7 +291,7 @@ RSpec.describe Fastsheet::Sheet, 'data types', :integration do
 
         large_row = sheet.row(3)
         expect(large_row[1]).to be_a(Float)
-        expect(large_row[1]).to be > 123456789.0
+        expect(large_row[1]).to be > 123_456_789.0
 
         negative_row = sheet.row(5)
         expect(negative_row[1]).to eq(-42.5)

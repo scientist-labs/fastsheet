@@ -2,23 +2,20 @@
 
 require 'spec_helper'
 
-RSpec.describe 'Native data conversion' do
+RSpec.describe Fastsheet do
   describe 'Excel serial date conversion algorithm' do
     # Test the general behavior of the excel_serial_days_to_unix_seconds_usecs function
     # These tests verify the conversion logic without getting into exact date calculations
-
-    def excel_serial_to_time(days)
+    def adjusted_days(days)
       # Ruby implementation matching the Rust code logic
-      adjusted_days = days
-      if adjusted_days >= 60.0
-        adjusted_days += 1.0 # Account for Excel's 1900 leap year bug
+      if days >= 60.0
+        days += 1.0 # Account for Excel's 1900 leap year bug
       end
 
-      # Convert to Unix timestamp
-      total_seconds = (adjusted_days - 25569.0) * 86400.0
-      sec = total_seconds.to_i
-      usec = ((total_seconds - sec) * 1_000_000.0).round
+      days
+    end
 
+    def adjusted_seconds(usec, sec)
       if usec >= 1_000_000
         sec += 1
         usec -= 1_000_000
@@ -27,6 +24,16 @@ RSpec.describe 'Native data conversion' do
         usec += 1_000_000
       end
 
+      [usec, sec]
+    end
+
+    def excel_serial_to_time(days)
+      # Convert to Unix timestamp
+      total_seconds = (adjusted_days(days) - 25_569.0) * 86_400.0
+      sec = total_seconds.to_i
+      usec = ((total_seconds - sec) * 1_000_000.0).round
+
+      usec, sec = adjusted_seconds(usec, sec)
       Time.at(sec, usec, :usec).utc
     end
 
@@ -43,8 +50,8 @@ RSpec.describe 'Native data conversion' do
 
     it 'handles fractional days correctly' do
       # Half a day should add 12 hours
-      time_start = excel_serial_to_time(25569.0)
-      time_half_day = excel_serial_to_time(25569.5)
+      time_start = excel_serial_to_time(25_569.0)
+      time_half_day = excel_serial_to_time(25_569.5)
 
       time_diff = time_half_day - time_start
       expect(time_diff).to eq(12 * 60 * 60) # 12 hours in seconds
@@ -52,8 +59,8 @@ RSpec.describe 'Native data conversion' do
 
     it 'handles microsecond precision' do
       # Small fractional values should affect microseconds
-      time1 = excel_serial_to_time(25569.0)
-      time2 = excel_serial_to_time(25569.000001) # About 0.0864 seconds
+      time1 = excel_serial_to_time(25_569.0)
+      time2 = excel_serial_to_time(25_569.000001) # About 0.0864 seconds
 
       time_diff = time2 - time1
       expect(time_diff).to be > 0
@@ -62,7 +69,7 @@ RSpec.describe 'Native data conversion' do
 
     it 'produces monotonic results' do
       # Later serial days should produce later times
-      times = [25569.0, 25570.0, 25571.0].map { |days| excel_serial_to_time(days) }
+      times = [25_569.0, 25_570.0, 25_571.0].map { |days| excel_serial_to_time(days) }
 
       expect(times[1]).to be > times[0]
       expect(times[2]).to be > times[1]
@@ -74,7 +81,7 @@ RSpec.describe 'Native data conversion' do
 
     it 'handles the Unix epoch reference point' do
       # 25569 is the Excel serial day for Unix epoch
-      time = excel_serial_to_time(25569.0)
+      time = excel_serial_to_time(25_569.0)
 
       # Should be close to Unix epoch (1970-01-01)
       expect(time.year).to eq(1970)
