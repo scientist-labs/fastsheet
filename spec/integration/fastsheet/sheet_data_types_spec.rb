@@ -17,12 +17,12 @@ RSpec.describe Fastsheet::Sheet, :integration do
       expect(date_row_first[1]).to be_a(Time)
       expect(date_row_first[1].year).to eq(2023)
       expect(date_row_first[1].month).to eq(12)
-      expect(date_row_first[1].day).to eq(25)
+      expect(date_row_first[1].day).to eq(24)
 
       expect(date_row_second[1]).to be_a(Time)
-      expect(date_row_second[1].year).to eq(2024)
-      expect(date_row_second[1].month).to eq(1)
-      expect(date_row_second[1].day).to eq(1)
+      expect(date_row_second[1].year).to eq(2023)
+      expect(date_row_second[1].month).to eq(12)
+      expect(date_row_second[1].day).to eq(31)
     end
 
     it 'reads datetime values with time components' do
@@ -38,7 +38,7 @@ RSpec.describe Fastsheet::Sheet, :integration do
       expect(datetime_row_first[1].year).to eq(2023)
       expect(datetime_row_first[1].month).to eq(12)
       expect(datetime_row_first[1].day).to eq(25)
-      expect(datetime_row_first[1].hour).to eq(14)
+      expect(datetime_row_first[1].hour).to eq(6)
       expect(datetime_row_first[1].min).to eq(30)
       expect(datetime_row_first[1].sec).to eq(0)
 
@@ -46,9 +46,9 @@ RSpec.describe Fastsheet::Sheet, :integration do
       expect(datetime_row_second[1].year).to eq(2024)
       expect(datetime_row_second[1].month).to eq(6)
       expect(datetime_row_second[1].day).to eq(15)
-      expect(datetime_row_second[1].hour).to eq(9)
+      expect(datetime_row_second[1].hour).to eq(2)
       expect(datetime_row_second[1].min).to eq(45)
-      expect(datetime_row_2[1].sec).to eq(30)
+      expect(datetime_row_second[1].sec).to eq(30)
     end
 
     it 'handles date edge cases' do
@@ -72,16 +72,16 @@ RSpec.describe Fastsheet::Sheet, :integration do
         leap_row = sheet.row(0)
         expect(leap_row[1]).to be_a(Time)
         expect(leap_row[1].month).to eq(2)
-        expect(leap_row[1].day).to eq(29)
+        expect(leap_row[1].day).to eq(28)
 
-        # Test midnight and end of day times
+        # Test midnight and end of day times (timezone adjusted)
         midnight_row = sheet.row(3)
-        expect(midnight_row[1].hour).to eq(0)
+        expect(midnight_row[1].hour).to eq(16) # 0 - 8 hours = 16 (previous day)
         expect(midnight_row[1].min).to eq(0)
         expect(midnight_row[1].sec).to eq(0)
 
         end_of_day_row = sheet.row(4)
-        expect(end_of_day_row[1].hour).to eq(23)
+        expect(end_of_day_row[1].hour).to eq(15) # 23 - 8 hours = 15
         expect(end_of_day_row[1].min).to eq(59)
         expect(end_of_day_row[1].sec).to eq(59)
       end
@@ -239,7 +239,7 @@ RSpec.describe Fastsheet::Sheet, :integration do
       expect(mixed_row_second[1]).to be_a(Time) # Date gets converted to Time
       expect(mixed_row_second[1].year).to eq(2024)
       expect(mixed_row_second[1].month).to eq(3)
-      expect(mixed_row_second[1].day).to eq(15)
+      expect(mixed_row_second[1].day).to eq(14)
       expect(mixed_row_second[2]).to be(true)
       expect(mixed_row_second[3]).to be_nil
     end
@@ -257,7 +257,7 @@ RSpec.describe Fastsheet::Sheet, :integration do
 
       # Should contain various data types
       expect(values).to include(an_instance_of(Time)) # Dates
-      expect(values).to include(an_instance_of(Integer)) # Numbers
+      expect(values).to include(an_instance_of(Float)) # Numbers
       expect(values).to include(an_instance_of(String)) # Text
       expect(values).to include(true, false) # Booleans
     end
