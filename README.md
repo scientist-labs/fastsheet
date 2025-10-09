@@ -79,7 +79,7 @@ sheet.sheet_index  # => 1
 
 ### Headers and Options
 
-All existing options work with sheet selection:
+All options can be combined as needed:
 
 ```ruby
 # Read specific sheet with header row
@@ -89,6 +89,12 @@ sheet = Fastsheet::Sheet.new('path/to/workbook.xlsx',
 
 sheet.header  # => ['Name', 'Age', 'City']
 sheet.rows    # => [['Alice', 30, 'NYC'], ['Bob', 25, 'LA']]
+
+# Combine all options
+sheet = Fastsheet::Sheet.new('path/to/workbook.xlsx',
+                             sheet: 'Data',
+                             header: true,
+                             date_parsing: false)
 ```
 
 ### Error Handling
@@ -131,6 +137,26 @@ The library automatically converts Excel data types:
 - Error cells (as `nil`)
 
 Dates and formulas are properly handled and converted to appropriate Ruby types.
+
+### Date Parsing Control
+
+By default, Excel dates and times are converted to Ruby `Time` objects. You can control this behavior with the `date_parsing` option:
+
+```ruby
+# Default behavior: dates as Time objects
+sheet = Fastsheet::Sheet.new('data.xlsx')
+# date cells return: #<Time 2023-12-25 00:00:00 UTC>
+
+# Disable date parsing: dates as strings
+sheet = Fastsheet::Sheet.new('data.xlsx', date_parsing: false)
+# date cells return: "2023-12-25 00:00:00"
+
+# Numbers and booleans are unaffected by date_parsing
+# - Numbers remain as Float: 42.0
+# - Booleans remain as TrueClass/FalseClass: true, false
+```
+
+This option is particularly useful for large datasets when reducing the overhead of dates creates a lot of extra memory.
 
 ## Contributing
 

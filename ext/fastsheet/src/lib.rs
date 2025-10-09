@@ -114,9 +114,15 @@ pub(crate) fn excel_serial_days_to_unix_seconds_usecs(days: f64) -> (i64, i64) {
 // Functions to use in Ruby
 //
 
-// Read the sheet with optional sheet selector
-unsafe fn read(this: Value, rb_file_name: Value, rb_sheet_selector: Value) -> Value {
+// Read the sheet with optional sheet selector and date_parsing mode
+unsafe fn read(
+    this: Value,
+    rb_file_name: Value,
+    rb_sheet_selector: Value,
+    rb_date_parsing: Value,
+) -> Value {
     let mut document = open_workbook_auto(rstr(rb_file_name)).expect("Cannot open file!");
+    let date_parsing = rb_date_parsing == rb_shim_Qtrue();
 
     let sheet = if rb_sheet_selector == rb_shim_Qnil() {
         // Default: open first worksheet
@@ -181,27 +187,26 @@ unsafe fn read(this: Value, rb_file_name: Value, rb_sheet_selector: Value) -> Va
         let new_row = rb_ary_new_capa(row.len() as c_long);
 
         for c in row.iter() {
-            rb_ary_push(
-                new_row,
-                match c {
-                    // vba error
-                    Data::Error(_) => rb_shim_Qnil(),
-                    Data::Empty => rb_shim_Qnil(),
-                    Data::Float(f) => rb_float_new(*f as c_double),
-                    Data::Int(i) => rb_ll2inum(*i as c_longlong),
-                    Data::Bool(b) => {
-                        if *b {
-                            rb_shim_Qtrue()
-                        } else {
-                            rb_shim_Qfalse()
-                        }
+            let cell_value = match c {
+                // vba error
+                Data::Error(_) => rb_shim_Qnil(),
+                Data::Empty => rb_shim_Qnil(),
+                Data::Float(f) => rb_float_new(*f as c_double),
+                Data::Int(i) => rb_ll2inum(*i as c_longlong),
+                Data::Bool(b) => {
+                    if *b {
+                        rb_shim_Qtrue()
+                    } else {
+                        rb_shim_Qfalse()
                     }
-                    Data::String(s) => match normalize_string_or_none(s) {
-                        None => rb_shim_Qnil(),
-                        Some(st) => rb_utf8_str_new_cstr(cstr(&st).as_ptr()),
-                    },
-                    Data::DateTime(dt) => {
-                        // Prefer calamine's parsed datetime when available.
+                }
+                Data::String(s) => match normalize_string_or_none(s) {
+                    None => rb_shim_Qnil(),
+                    Some(st) => rb_utf8_str_new_cstr(cstr(&st).as_ptr()),
+                },
+                Data::DateTime(dt) => {
+                    if date_parsing {
+                        // Convert to Time objects (default behavior)
                         if let Some(ndt) = dt.as_datetime() {
                             let ndt_utc = ndt.and_utc();
                             let sec = ndt_utc.timestamp() as time_t;
@@ -212,11 +217,19 @@ unsafe fn read(this: Value, rb_file_name: Value, rb_sheet_selector: Value) -> Va
                             let (sec, usec) = excel_serial_days_to_unix_seconds_usecs(dt.as_f64());
                             rb_time_new(sec as time_t, usec as c_long)
                         }
+                    } else {
+                        // Convert datetime to string representation
+                        if let Some(ndt) = dt.as_datetime() {
+                            rb_utf8_str_new_cstr(cstr(&ndt.to_string()).as_ptr())
+                        } else {
+                            rb_utf8_str_new_cstr(cstr(&dt.as_f64().to_string()).as_ptr())
+                        }
                     }
-                    Data::DateTimeIso(s) => rb_utf8_str_new_cstr(cstr(s).as_ptr()),
-                    Data::DurationIso(s) => rb_utf8_str_new_cstr(cstr(s).as_ptr()),
-                },
-            );
+                }
+                Data::DateTimeIso(s) => rb_utf8_str_new_cstr(cstr(s).as_ptr()),
+                Data::DurationIso(s) => rb_utf8_str_new_cstr(cstr(s).as_ptr()),
+            };
+            rb_ary_push(new_row, cell_value);
         }
 
         rb_ary_push(rows, new_row);
@@ -338,7 +351,7 @@ pub unsafe extern "C" fn Init_libfastsheet() {
         cstr("read!").as_ptr(),
         // Rust function as pointer to C function
         read as *const c_void,
-        2 as c_int,
+        3 as c_int,
     );
 
     // Class methods for sheet enumeration

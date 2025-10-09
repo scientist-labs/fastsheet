@@ -10,7 +10,8 @@ module Fastsheet
 
     def initialize(file_name, options = {})
       sheet_selector = normalize_sheet_selector(options[:sheet])
-      load_sheet_data(file_name, sheet_selector)
+      date_parsing = options.key?(:date_parsing) ? options[:date_parsing] : true
+      load_sheet_data(file_name, sheet_selector, date_parsing)
       extract_header_if_requested(options[:header])
     end
 
@@ -47,8 +48,8 @@ module Fastsheet
       sheet
     end
 
-    def load_sheet_data(file_name, sheet_selector)
-      read!(file_name, sheet_selector)
+    def load_sheet_data(file_name, sheet_selector, date_parsing)
+      read!(file_name, sheet_selector, date_parsing)
     rescue RuntimeError => e
       handle_sheet_loading_error(e)
     end

@@ -81,6 +81,30 @@ RSpec.describe Fastsheet::Sheet do
     end
   end
 
+  describe 'date_parsing option' do
+    it 'accepts date_parsing option' do
+      expect { described_class.new('dummy.xlsx', date_parsing: false) }.not_to raise_error
+    end
+
+    it 'defaults to date_parsing: true when not specified' do
+      sheet = described_class.new('dummy.xlsx')
+      expect(sheet).to be_a(described_class)
+    end
+
+    it 'passes date_parsing option to read! method' do
+      sheet = described_class.new('dummy.xlsx', date_parsing: false)
+      expect(sheet).to be_a(described_class)
+    end
+
+    it 'works with other options' do
+      expect { described_class.new('dummy.xlsx', date_parsing: false, header: true) }.not_to raise_error
+    end
+
+    it 'works with sheet selection' do
+      expect { described_class.new('dummy.xlsx', sheet: 'Sheet1', date_parsing: false) }.not_to raise_error
+    end
+  end
+
   describe 'class methods' do
     before do
       allow(described_class).to receive(:sheet_names).and_call_original
